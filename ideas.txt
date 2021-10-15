@@ -1,0 +1,53 @@
+Each time the ball hits the paddle, the ball accelerates by 1.2x
+
+Paddle speed is 1px/iteration
+
+Ball bounce just reverses the x-axis speed when hitting paddles,
+reverses y-axis when hitting walls.
+
+Starting angle is randomized
+
+Info given to the AI:
+-both paddle's f_rect object
+    Contains:
+        -size
+        -position
+        -can check for intersection
+-ball f_rect
+    Contains:
+        -size
+        -position
+        -can check for intersect
+-size of the "table"
+
+UP IS NEGATIVE, DOWN IS POSITIVE
+
+
+What can we do with this information?
+-derive the speed of the ball -- can also be predicted by counting collisions
+-derive the speed of the paddle (or rather the direction, as the speed is constant and known)
+
+What do we need to do?
+-predict the position of the ball as early as possible
+    -could you predict the whole game from the starting angle?
+        -NO
+        -recreate a model for the game physics
+        -calculates all positions of the ball, sends the paddle to those positions with minimal movement
+    -return angle of the ball is determined by how the paddle hits the ball
+        -earliest time the ball can be predicted is when it hits the enemy paddle
+            -(can be predicted earlier to an extent, informing at least a range of positions)
+                -predicted earlier by finding the range of paddle positions by the time the ball arrives
+        -this can be used to send the ball to impossible to reach areas based on last paddle position
+            -using wall bounces as well
+    -time the ball takes to hit other paddle = table_width/ball speed x
+
+How to calculate hard to reach areas for the enemy?
+-get enemy position
+-known enemy speed
+-calculate ball to opposite side time
+-calculate possible angles the ball can be sent to using current self paddle position/speed and ball pos/speed
+    -find possible y-positions from the angle
+        -compare possible y positions to enemy position to find the one furthest away
+            -make the paddle move to that position
+
+
