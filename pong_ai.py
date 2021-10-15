@@ -1,3 +1,10 @@
+# Pong AI
+# Author: Arthur Goetzke-Coburn
+# Email: arthur.goetzkecoburn@gmail.com
+#
+# An AI that plays the version of Pong provided by Michael Guerzhoy and Denis Begun
+
+
 from math import atan2, sin, cos, sqrt
 
 
