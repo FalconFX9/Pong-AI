@@ -50,4 +50,27 @@ How to calculate hard to reach areas for the enemy?
         -compare possible y positions to enemy position to find the one furthest away
             -make the paddle move to that position
 
+How is the bounce angle/speed calculated?
+    -ball sends it's own center_y
+    -paddle calculates it's center_y
+
+    rel_dis = (ball_center_y - paddle_center_y)/paddle_y_size
+    rel_dis = min(0.5, rel_dis)
+    rel_dis = max(-0.5, rel_dis) --> What is this for?
+
+    -calculates the sign (depends on which paddle the ball is hitting)
+
+    sign*rel_dis*max_angle
+    Output: -22.5<angle<22.5
+
+    v = [vx, vy]
+    Vx = cos(angle)*vx-sin(angle)*vy
+    Vy = sin(angle)*vx+cos(angle)*vy
+        --> What the ---- is the point of this?
+    Vx = -Vx
+    Vx = cos(-angle)*vx-sin(-angle)*vy
+    Vy = sin(-angle)*vx+cos(-angle)*vy
+        --> Again, why?
+            --> What does this math do?????
+
 

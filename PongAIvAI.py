@@ -92,7 +92,6 @@ class Paddle:
         if to_top < 0:
             self.frect.move_ip(0, -to_top)
 
-
     def get_face_pts(self):
         return ((self.frect.pos[0] + self.frect.size[0]*self.facing, self.frect.pos[1]),
                 (self.frect.pos[0] + self.frect.size[0]*self.facing, self.frect.pos[1] + self.frect.size[1]-1)
@@ -147,7 +146,7 @@ class Ball:
         for wall_rect in walls_Rects:
             if self.frect.get_rect().colliderect(wall_rect):
                 c = 0
-                #print "in wall. speed: ", self.speed
+                # print("in wall. speed: ", self.speed)
                 while self.frect.get_rect().colliderect(wall_rect):
                     self.frect.move_ip(-.1*self.speed[0], -.1*self.speed[1], move_factor)
                     c += 1 # this basically tells us how far the ball has traveled into the wall
@@ -159,7 +158,7 @@ class Ball:
                     self.frect.move_ip(.1*self.speed[0], .1*self.speed[1], move_factor)
                     c -= 1 # move by roughly the same amount as the ball had traveled into the wall
                 moved = 1
-                #print "out of wall, position, speed: ", self.frect.pos, self.speed
+                # print("out of wall, position, speed: ", self.frect.pos, self.speed)
 
         for paddle in paddles:
             if self.frect.intersect(paddle.frect):
@@ -263,13 +262,18 @@ def render(screen, paddles, ball, score, table_size):
     global pong_ai_obj
     screen.fill(black)
     x, y = pong_ai_obj.get_calculated_values()
-    pygame.draw.rect(screen, white, (x,y, 5, 5))
+
     pygame.draw.rect(screen, white, paddles[0].frect.get_rect())
     pygame.draw.rect(screen, white, paddles[1].frect.get_rect())
-
+    pygame.draw.rect(screen, (255, 0, 0), (x, y, 5, 5))
     pygame.draw.circle(screen, white, (int(ball.get_center()[0]), int(ball.get_center()[1])),  int(ball.frect.size[0]/2), 0)
-
-
+    vx, vy = pong_ai_obj.get_bounce_velocity()
+    angle = math.atan2(vy, vx)
+    rect_surf = pygame.Surface((50, 5)).convert_alpha()
+    rect_surf.fill((255, 0, 0))
+    print(angle)
+    rect_surf_new = pygame.transform.rotate(rect_surf, angle*180/3.1415)
+    screen.blit(rect_surf_new, (paddles[0].frect.pos[0], paddles[0].frect.pos[1]+(paddles[0].frect.size[1]/2)))
     pygame.draw.line(screen, white, [screen.get_width()/2, 0], [screen.get_width()/2, screen.get_height()])
 
     score_font = pygame.font.Font(None, 32)
