@@ -268,6 +268,9 @@ def render(screen, paddles, ball, score, table_size):
     pygame.draw.rect(screen, white, paddles[0].frect.get_rect())
     pygame.draw.rect(screen, white, paddles[1].frect.get_rect())
     pygame.draw.rect(screen, (255, 0, 0), (x, y, 5, 5))
+    y2, y3, = pong_ai_obj.get_p_minmax()
+    pygame.draw.rect(screen, (255, 255, 0), (100, y2, 5, 5))
+    pygame.draw.rect(screen, (255, 0, 0), (100, y3, 5, 5))
     pygame.draw.circle(screen, white, (int(ball.get_center()[0]), int(ball.get_center()[1])),  int(ball.frect.size[0]/2), 0)
     vx, vy = pong_ai_obj.get_bounce_velocity()
     angle = math.atan2(vy, vx)
@@ -382,7 +385,7 @@ def init_game():
     dust_error = 0.00
     init_speed_mag = 2
     timeout = 0.0003
-    clock_rate = 10000
+    clock_rate = 80000
     turn_wait_rate = 3
     score_to_win = 1000
 

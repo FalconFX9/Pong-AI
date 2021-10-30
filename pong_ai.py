@@ -44,6 +44,7 @@ class PongAI:
         self.paddle_velocity = 1
         self.vx_b, self.vy_b = 0, 0
         self.test = test
+        self.p_min, self.p_max = 0, 0
 
     def get_angle_and_velocity(self):
         d_x = self.ball_rect.pos[0] - self.prev_ball_rect.pos[0]
@@ -106,9 +107,9 @@ class PongAI:
                 d_wall_y = self.table_size[1]-y_final
             else:
                 d_wall_y = -y_final
-            angle = self.calculate_angle(self.left_paddle, self.ball_rect)
+            angle = self.calculate_angle(self.left_paddle.pos[1], y_final)  # Should this be y_final of ball.pos[1]?
 
-            vx, vy = self.calculate_range_bounce_angle(self.left_paddle, self.ball_rect)
+            # vx, vy = self.calculate_range_bounce_angle(self.left_paddle, self.ball_rect)
             simplified = False
             if True:
                 self.velocity_x, self.velocity_y = self.recalculate_ball_speed(angle)
@@ -122,10 +123,53 @@ class PongAI:
         else:
             return x_final, y_final
 
-    def calculate_angle(self, paddle, ball):
-        ball_center_y = ball.pos[1] + ball.size[1]/2
-        paddle_center_y = paddle.pos[1] + paddle.size[1]/2
-        rel_dis = (ball_center_y - paddle_center_y) / paddle.size[1]
+    def offense(self, x_f, y_f, paddle):
+        d_y = y_f-(paddle.pos[1]+paddle.size[1])
+        d_x = self.ball_rect.pos[0]-(paddle.pos[0] + paddle.size[0])
+        iter_num_x = abs(d_x/self.velocity_x)
+        iter_num_y = abs(d_y)
+        if iter_num_x < iter_num_y:
+            if d_y < 0:
+                paddle_max = (iter_num_x * self.paddle_velocity * -1) + paddle.pos[1] + (paddle.size[1] / 2)
+                paddle_min = (y_f - paddle.pos[1]) + paddle.pos[1] + (paddle.size[1] / 2)
+            else:
+                paddle_max = (iter_num_x * self.paddle_velocity) + paddle.pos[1] + (paddle.size[1] / 2)
+                paddle_min = (y_f - paddle.pos[1] + paddle.size[1]) + paddle.pos[1] + (paddle.size[1] / 2)
+        else:
+            if d_y < 0:
+                paddle_max = (iter_num_y * self.paddle_velocity * -1) + paddle.pos[1] + (paddle.size[1] / 2)
+                paddle_min = (y_f - paddle.pos[1]) + paddle.pos[1] + (paddle.size[1] / 2)
+            else:
+                paddle_max = (iter_num_y * self.paddle_velocity) + paddle.pos[1] + (paddle.size[1] / 2)
+                paddle_min = (y_f - paddle.pos[1] + paddle.size[1]) + paddle.pos[1] + (paddle.size[1] / 2)
+
+        theta_1 = self.calculate_angle(paddle_min, y_f)
+        theta_2 = self.calculate_angle(paddle_max, y_f)
+        if paddle_min < paddle_max:
+            vx_max = 0
+            pos_y = 0
+            for pos in range(int(paddle_min), int(paddle_max)):
+                theta = self.calculate_angle(pos, y_f)
+                vx, vy = self.recalculate_ball_speed(theta)
+                if vx_max < abs(vx):
+                    vx_max = abs(vx)
+                    pos_y = pos
+
+        else:
+            vx_max = 0
+            pos_y = 0
+            for pos in range(int(paddle_min), int(paddle_max), -1):
+                theta = self.calculate_angle(pos, y_f)
+                vx, vy = self.recalculate_ball_speed(theta)
+                if vx_max < abs(vx):
+                    vx_max = abs(vx)
+                    pos_y = pos
+        return pos_y
+
+    def calculate_angle(self, paddle_y, ball_y):
+        ball_center_y = ball_y + self.ball_rect.size[1]/2
+        paddle_center_y = paddle_y + self.left_paddle.size[1]/2
+        rel_dis = (ball_center_y - paddle_center_y) / self.left_paddle.size[1]
         rel_dis = min(0.5, rel_dis)
         rel_dis = max(-0.5, rel_dis)
         max_angle = 45
@@ -133,6 +177,7 @@ class PongAI:
             sign = 1
         else:
             sign = -1
+        #print(rel_dis)
         return radians(sign*rel_dis*max_angle)
 
     def recalculate_ball_speed(self, angle):
@@ -158,10 +203,10 @@ class PongAI:
         if abs(max_attain_dist) > abs(max_distance):
             angles = []
             paddle.pos[1] -= max_distance
-            angles.append(self.calculate_angle(paddle, ball))
+            angles.append(self.calculate_angle(paddle, ball.pos[1]))
             paddle.pos[1] += max_distance
             paddle.pos[1] -= min_distance
-            angles.append(self.calculate_angle(paddle, ball))
+            angles.append(self.calculate_angle(paddle, ball.pos[1]))
             paddle.pos[1] += min_distance
             angle = (angles[0]+angles[1])/2
             return self.recalculate_ball_speed(angle)
@@ -172,10 +217,10 @@ class PongAI:
                 factor = 1
             angles = []
             paddle.pos[1] -= (max_attain_dist * factor)
-            angles.append(self.calculate_angle(paddle, ball))
+            angles.append(self.calculate_angle(paddle, ball.pos[1]))
             paddle.pos[1] += (max_attain_dist * factor)
             paddle.pos[1] -= min_distance
-            angles.append(self.calculate_angle(paddle, ball))
+            angles.append(self.calculate_angle(paddle, ball.pos[1]))
             paddle.pos[1] += min_distance
             angle = (angles[0] + angles[1]) / 2
             return self.recalculate_ball_speed(angle)
@@ -203,7 +248,8 @@ class PongAI:
                 d_wall_y = -self.ball_rect.pos[1]
 
             self.x_final, self.y_final = self.calculate_final_pos(d_wall_x, d_wall_y, self.ball_rect.pos[0], self.ball_rect.pos[1])
-
+            if self.test:
+                self.y_final = self.offense(self.x_final, self.y_final, paddle_frect)
             if paddle_frect.pos[1]+paddle_frect.size[1]/2 < self.y_final:
                 self.direction = 'down'
             else:
@@ -217,3 +263,6 @@ class PongAI:
 
     def get_bounce_velocity(self):
         return self.vx_b, self.vy_b
+
+    def get_p_minmax(self):
+        return self.p_min, self.p_max
