@@ -13,6 +13,8 @@ Test results:
         -1000-786
     -Middle return vs complex collision prediction
         -1000-649
+    -Middle return + Max VX offense vs simple collision prediction
+        -1000-412
 
 """
 
@@ -110,8 +112,8 @@ class PongAI:
             angle = self.calculate_angle(self.left_paddle.pos[1], y_final)  # Should this be y_final of ball.pos[1]?
 
             # vx, vy = self.calculate_range_bounce_angle(self.left_paddle, self.ball_rect)
-            simplified = False
-            if True:
+            simplified = True
+            if False:
                 self.velocity_x, self.velocity_y = self.recalculate_ball_speed(angle)
             if simplified:
                 self.velocity_x *= -1

@@ -345,7 +345,7 @@ def game_loop(screen, paddles, ball, table_size, clock_rate, turn_wait_rate, sco
         #render_time.append(time.time()-time_render)
 
 
-        #pygame.event.pump()
+        pygame.event.pump()
         #keys = pygame.key.get_pressed()
         #if keys[K_q]:
         #    return
