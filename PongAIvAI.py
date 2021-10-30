@@ -71,13 +71,16 @@ class Paddle:
         self.facing = facing
         self.max_angle = max_angle
         self.timeout = timeout
+        self.runtime_avg = []
 
     def factor_accelerate(self, factor):
         self.speed = factor*self.speed
 
 
     def move(self, enemy_frect, ball_frect, table_size):
+        time_init = time.time()
         direction = self.move_getter(self.frect.copy(), enemy_frect.copy(), ball_frect.copy(), tuple(table_size))
+        self.runtime_avg.append(time.time()-time_init)
         #direction = timeout(self.move_getter, (self.frect.copy(), enemy_frect.copy(), ball_frect.copy(), tuple(table_size)), {}, self.timeout)
         if direction == "up":
             self.frect.move_ip(0, -self.speed)
@@ -103,7 +106,6 @@ class Paddle:
         rel_dist_from_c = min(0.5, rel_dist_from_c)
         rel_dist_from_c = max(-0.5, rel_dist_from_c)
         sign = 1-2*self.facing
-        print(sign*rel_dist_from_c*self.max_angle)
         return sign*rel_dist_from_c*self.max_angle*math.pi/180
 
 
@@ -197,7 +199,7 @@ class Ball:
                 else:
                     self.speed = (v[0], v[1])
                 self.prev_bounce = paddle
-                print("transformed speed: ", self.speed)
+                #print("transformed speed: ", self.speed)
 
                 while c > 0 or self.frect.intersect(paddle.frect):
                     #print "move_ip()"
@@ -271,9 +273,9 @@ def render(screen, paddles, ball, score, table_size):
     angle = math.atan2(vy, vx)
     rect_surf = pygame.Surface((50, 5)).convert_alpha()
     rect_surf.fill((255, 0, 0))
-    print(angle)
-    rect_surf_new = pygame.transform.rotate(rect_surf, angle*180/3.1415)
-    screen.blit(rect_surf_new, (paddles[0].frect.pos[0], paddles[0].frect.pos[1]+(paddles[0].frect.size[1]/2)))
+    #print(angle)
+    #rect_surf_new = pygame.transform.rotate(rect_surf, angle*180/3.1415)
+    #screen.blit(rect_surf_new, (paddles[0].frect.pos[0], paddles[0].frect.pos[1]+(paddles[0].frect.size[1]/2)))
     pygame.draw.line(screen, white, [screen.get_width()/2, 0], [screen.get_width()/2, screen.get_height()])
 
     score_font = pygame.font.Font(None, 32)
@@ -303,7 +305,7 @@ def game_loop(screen, paddles, ball, table_size, clock_rate, turn_wait_rate, sco
 
 
 
-
+    render_time = []
     while max(score) < score_to_win:
         old_score = score[:]
         ball, score = check_point(score, ball, table_size)
@@ -321,6 +323,7 @@ def game_loop(screen, paddles, ball, table_size, clock_rate, turn_wait_rate, sco
         if not display:
             continue
         if score != old_score:
+            print(score)
             font = pygame.font.Font(None, 32)
             if score[0] != old_score[0]:
                 screen.blit(font.render("Left scores!", True, white, black), [0, 32])
@@ -332,20 +335,25 @@ def game_loop(screen, paddles, ball, table_size, clock_rate, turn_wait_rate, sco
             clock.tick(turn_wait_rate)
 
 
-
-        render(screen, paddles, ball, score, table_size)
-
-
-
-        pygame.event.pump()
-        keys = pygame.key.get_pressed()
-        if keys[K_q]:
-            return
+        #time_render = time.time()
+        if score[0] % 40 == 0:
+            render(screen, paddles, ball, score, table_size)
+            clock.tick(clock_rate)
+        #render_time.append(time.time()-time_render)
 
 
+        #pygame.event.pump()
+        #keys = pygame.key.get_pressed()
+        #if keys[K_q]:
+        #    return
 
-        clock.tick(clock_rate)
 
+
+
+
+    print("Average calculation time P0:", math.fsum(paddles[0].runtime_avg)/len(paddles[0].runtime_avg))
+    print("Average calculation time P1:", math.fsum(paddles[1].runtime_avg) / len(paddles[0].runtime_avg))
+    print("Average render time:", math.fsum(render_time) / len(render_time))
     font = pygame.font.Font(None, 64)
     if score[0] > score[1]:
         screen.blit(font.render("Left wins!", True, white, black), [24, 32])
@@ -374,9 +382,9 @@ def init_game():
     dust_error = 0.00
     init_speed_mag = 2
     timeout = 0.0003
-    clock_rate = 80
+    clock_rate = 10000
     turn_wait_rate = 3
-    score_to_win = 100
+    score_to_win = 1000
 
 
     screen = pygame.display.set_mode(table_size)
@@ -389,9 +397,10 @@ def init_game():
     import chaser_ai
     import pong_ai
     global pong_ai_obj
-    pong_ai_obj = pong_ai.PongAI()
-    paddles[1].move_getter = pong_ai_obj.update
-    paddles[0].move_getter = chaser_ai.pong_ai #chaser_ai.pong_ai
+    pong_ai_obj = pong_ai.PongAI(True)
+    pong_ai_obj_2 = pong_ai.PongAI()
+    paddles[1].move_getter = pong_ai_obj_2.update
+    paddles[0].move_getter = pong_ai_obj.update #chaser_ai.pong_ai
     
     game_loop(screen, paddles, ball, table_size, clock_rate, turn_wait_rate, score_to_win, 1)
     ball = Ball(table_size, ball_size, paddle_bounce, wall_bounce, dust_error, init_speed_mag)
