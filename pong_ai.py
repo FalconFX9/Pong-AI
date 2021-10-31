@@ -5,7 +5,12 @@
 # An AI that plays the version of Pong provided by Michael Guerzhoy and Denis Begun
 """
 TODO: Clean up code
-      Implement offensive tactics
+      Optimize code--runtime must be at minimum 5x faster, ideally 10-50x faster.
+
+Runtime issues:
+    -offensive tactics result in a 520x slowdown
+        -due to running physics loop for a massive range of positions (~100-200)
+
 Test results:
     -Middle return vs simple collision prediction
         -1000-747
@@ -24,6 +29,8 @@ Test results:
     -Middle return + max DY offense vx Middle return:
         -1000-532
             -Much slower computation time (avg comp. time of 0.00046s), or 0.00016s slower than timeout
+        -1000-503
+            -With fixing of bounced_on_enemy, avg comp. time was 0.00041s
 
 
 """
@@ -76,16 +83,16 @@ class PongAI:
         else:
             iter_num_y = iter_num_x + 1
         bounce = False
-        bounce_on_enemy = False
+        self.bounced_on_enemy = False
         if iter_num_y < iter_num_x:
             bounce = True
         else:
             if self.velocity_x*self.side < 0:
-                bounce_on_enemy = True
+                self.bounced_on_enemy = True
             else:
-                if bounce_on_enemy:
+                if self.bounced_on_enemy:
                     self.wait = True
-                    bounce_on_enemy = False
+                    self.bounced_on_enemy = False
 
         if self.wait:
             if iter_num_x < iter_num_y:
@@ -95,7 +102,7 @@ class PongAI:
         iter_num = min(iter_num_x, iter_num_y)
         x_final = (self.velocity_x * iter_num) + x
         y_final = (self.velocity_y * iter_num) + y
-        if offense and bounce_on_enemy:
+        if offense and self.bounced_on_enemy:
             return x_final, y_final
         if self.velocity_x*self.side < 0:
             return 0, self.table_size[1]/2
@@ -112,7 +119,7 @@ class PongAI:
                 return self.calculate_final_pos(d_wall_x, factor*self.table_size[1], x_final, y_final, offense)
             except RecursionError:
                 return x_final, y_final
-        elif bounce_on_enemy:
+        elif self.bounced_on_enemy:
             if self.side == 1:
                 d_wall_x = (self.right_paddle.pos[0] - self.left_paddle.pos[0])
             else:
@@ -132,7 +139,6 @@ class PongAI:
             #else:
             #    self.velocity_x, self.velocity_y = vx, vy
             self.vx_b, self.vy_b = self.velocity_x, self.velocity_y
-            self.bounced_on_enemy = True
             return self.calculate_final_pos(d_wall_x, d_wall_y, x_final, y_final, offense)
         else:
             return x_final, y_final
