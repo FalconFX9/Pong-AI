@@ -211,39 +211,22 @@ class PongAI:
                 paddle_max = (iter_num_y * self.paddle_velocity) + paddle.pos[1] + (paddle.size[1] / 2)
                 paddle_min = (y_f - paddle.pos[1] + paddle.size[1]) + paddle.pos[1] + (paddle.size[1] / 2)
         vx = None
-        if paddle_min < paddle_max:
-            dy_max = 0
-            pos_y = 0
-            for pos in range(int(paddle_min), int(paddle_max), 1):
-                theta = self.calculate_angle(pos-(paddle.size[1]/2), y_f)
-                vx, vy = self.recalculate_ball_speed(theta)
+        factor = 1
+        if paddle_min > paddle_max:
+            factor = - 1
+        dy_max = 0
+        pos_y = 0
+        for pos in range(int(paddle_min), int(paddle_max), 1*factor):
+            theta = self.calculate_angle(pos-(paddle.size[1]/2), y_f)
+            vx, vy = self.recalculate_ball_speed(theta)
+            if vx > vy:
                 yb_f = self.calculate_best_pos(vx, vy, x_f, y_f)
                 d_y = abs(yb_f)-abs(other_paddle.pos[1]+other_paddle.size[1])
                 if dy_max < abs(d_y):
                     dy_max = d_y
                     pos_y = pos
                     self.best_ball_send = yb_f
-                else:
-                    break
 
-        else:
-            dy_max = 0
-            pos_y = 0
-            for pos in range(int(paddle_min), int(paddle_max), -1):
-                theta = self.calculate_angle(pos-(paddle.size[1]/2), y_f)
-                vx, vy = self.recalculate_ball_speed(theta)
-                yb_f = self.calculate_best_pos(vx, vy, x_f, y_f)
-                d_y = abs(yb_f)-abs(other_paddle.pos[1]+other_paddle.size[1])
-                if dy_max < abs(d_y):
-                    dy_max = d_y
-                    pos_y = pos
-                    self.best_ball_send = yb_f
-                else:
-                    break
-
-        if vx:
-            #print(dy_max, abs(self.table_size[0]/vx))
-            pass
         return pos_y
 
     def calculate_best_pos(self, vx, vy, x_f, y_f):
@@ -348,7 +331,7 @@ class PongAI:
                 d_wall_y = -(self.ball_rect.pos[1]+self.ball_rect.size[1])
 
             self.x_final, self.y_final = self.calculate_final_pos(d_wall_x, d_wall_y, self.ball_rect.pos[0], self.ball_rect.pos[1])
-            if self.test:
+            if self.test and self.velocity_x*self.side > 0:
                 self.y_final = self.offense(self.x_final, self.y_final, paddle_frect, other_paddle_frect)
             if paddle_frect.pos[1]+paddle_frect.size[1]/2 < self.y_final:
                 self.direction = 'down'
