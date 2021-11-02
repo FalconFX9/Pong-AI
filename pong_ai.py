@@ -41,7 +41,9 @@ Test results:
     -Middle return + max DY offense (non-reducing DY) vs Middle return:
         -1000-701
             -Avg. comp time of 0.000366s -- R5 4500U
-
+    -Middle return + max DY, min vx > vy offense vs Middle return:
+        -1000-363
+            -Avg. comp time of 0.0001847s -- i7-7700HQ
 
 
 """
