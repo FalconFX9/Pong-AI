@@ -39,8 +39,8 @@ Test results:
         -1000-114
             -Avg. comp time of 0.00055s -- R5 4500U
     -Middle return + max DY offense (non-reducing DY) vs Middle return:
-        -
-            -Avg. comp time of 0.000s -- R5 4500U
+        -1000-701
+            -Avg. comp time of 0.000366s -- R5 4500U
 
 
 
