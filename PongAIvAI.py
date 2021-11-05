@@ -78,9 +78,9 @@ class Paddle:
 
 
     def move(self, enemy_frect, ball_frect, table_size):
-        time_init = time.time()
+        time_init = time.time_ns()
         direction = self.move_getter(self.frect.copy(), enemy_frect.copy(), ball_frect.copy(), tuple(table_size))
-        self.runtime_avg.append(time.time()-time_init)
+        self.runtime_avg.append(time.time_ns()-time_init)
         #direction = timeout(self.move_getter, (self.frect.copy(), enemy_frect.copy(), ball_frect.copy(), tuple(table_size)), {}, self.timeout)
         if direction == "up":
             self.frect.move_ip(0, -self.speed)
@@ -254,7 +254,7 @@ def timeout(func, args=(), kwargs={}, timeout_duration=1, default=None):
     it = InterruptableThread()
     it.start()
     it.join(timeout_duration)
-    if it.isAlive():
+    if it.is_alive():
         print("TIMEOUT")
         return default
     else:
@@ -271,7 +271,7 @@ def render(screen, paddles, ball, score, table_size):
     y2, y3, = pong_ai_obj.get_p_minmax()
     pygame.draw.rect(screen, (255, 255, 0), (100, y2, 5, 5))
     pygame.draw.rect(screen, (255, 0, 0), (100, y3, 5, 5))
-    pygame.draw.rect(screen, (255, 0, 255), (400, pong_ai_obj.best_ball_send, 5, 5))
+    pygame.draw.rect(screen, (255, 0, 255), (40, pong_ai_obj.best_ball_send, 5, 5))
     pygame.draw.circle(screen, white, (int(ball.get_center()[0]), int(ball.get_center()[1])),  int(ball.frect.size[0]/2), 0)
     vx, vy = pong_ai_obj.get_bounce_velocity()
     angle = math.atan2(vy, vx)
@@ -340,7 +340,7 @@ def game_loop(screen, paddles, ball, table_size, clock_rate, turn_wait_rate, sco
 
 
         #time_render = time.time()
-        if score[0] % 40 == 0:
+        if score[0] % 200 == 0:
             render(screen, paddles, ball, score, table_size)
             clock.tick(clock_rate)
         #render_time.append(time.time()-time_render)
@@ -351,13 +351,15 @@ def game_loop(screen, paddles, ball, table_size, clock_rate, turn_wait_rate, sco
         #if keys[K_q]:
         #    return
 
-
-
-
-
+    paddles[0].runtime_avg.remove(0)
+    print(len(paddles[0].runtime_avg))
     print("Average calculation time P0:", math.fsum(paddles[0].runtime_avg)/len(paddles[0].runtime_avg))
     print("Average calculation time P1:", math.fsum(paddles[1].runtime_avg) / len(paddles[0].runtime_avg))
-    print("Average render time:", math.fsum(render_time) / len(render_time))
+    file = open("CalculationTime.txt", 'w')
+    for times in paddles[0].runtime_avg:
+        file.write(str(times)+"\n")
+    file.close()
+    quit()
     font = pygame.font.Font(None, 64)
     if score[0] > score[1]:
         screen.blit(font.render("Left wins!", True, white, black), [24, 32])
@@ -385,7 +387,7 @@ def init_game():
     wall_bounce = 1.00
     dust_error = 0.00
     init_speed_mag = 2
-    timeout = 0.0003
+    timeout = 0.0001
     clock_rate = 80
     turn_wait_rate = 3
     score_to_win = 1000

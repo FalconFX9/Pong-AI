@@ -10,6 +10,8 @@ TODO: Clean up code
 Runtime issues:
     -offensive tactics result in a 520x slowdown
         -due to running physics loop for a massive range of positions (~100-200)
+    -offensive tactics result in a ~2x slowdown with non-recursive bounce estimates
+        -model does not seem to be 100% correct, needs fixing, but seems to be reasonably accurate
 
 Test results:
     -Middle return vs simple collision prediction
@@ -44,8 +46,23 @@ Test results:
     -Middle return + max DY, min vx > vy offense vs Middle return:
         -1000-363
             -Avg. comp time of 0.0001847s -- i7-7700HQ
-
-
+        -1000-363
+            -Avg. comp time of 0.000221s -- R5 4500U
+        -1000-367
+            -Avg. comp time of 3.7x10-7s, running the timeout function call with 0.0003s timeout -- R5 4500U
+        -1000-338
+            -Avg. comp time of 6.65x10-7s, running the timeout function call with 0.0001s timeout -- R5 4500U
+    -Middle return + max DY, min vx > 1.6vy offense vs Middle return:
+        -1000-361
+            -Avg. comp time of 5.87x10-7s, running the timeout function call with 0.0001s timeout -- R5 4500U
+        -Same but factor = +- 2
+            -1000-386, 3.85x10-7s
+        -1000-373
+    -Middle return + max DY, min vx > vy offense, non-recursive bounce calculation vs Middle return
+        -1000-345
+            -Avg. comp time of 0.21244ms, no timeout -- R5 4500U
+        -1000-341
+            -Avg. comp time of 0.214ms, no timeout -- R5 4500U
 """
 
 
@@ -193,12 +210,30 @@ class PongAI:
         else:
             return x_final, y_final
 
+    def calculate_final_pos_no_recursion(self, dx, dy, x, y, offense=False):
+        if abs(self.velocity_x) < 0.1:
+            self.velocity_x = (dx/abs(dx))*0.1
+        iter_num = dx / self.velocity_x
+        distance_y = abs(self.velocity_y)*iter_num
+        sign_y = self.velocity_y / abs(self.velocity_y)
+        distance_y -= abs(dy)
+        num_bounces = abs(distance_y) % self.table_size[1]
+        x_final = self.velocity_x * iter_num
+        if num_bounces % 2 != 0:
+            y_final = (distance_y % (self.table_size[1] - self.ball_rect.size[1]))*sign_y*-1 + y
+            y_final -= self.table_size[1]
+        y_final = (distance_y % (self.table_size[1] - self.ball_rect.size[1])) * sign_y + y
+        return x_final, y_final
+
     def offense(self, x_f, y_f, paddle, other_paddle):
         d_y = y_f-(paddle.pos[1]+paddle.size[1])
-        d_x = self.ball_rect.pos[0]-(paddle.pos[0] + paddle.size[0])
+        if paddle.pos[0] < self.table_size[0]/2:
+            d_x = (self.ball_rect.pos[0])-(paddle.pos[0] + paddle.size[0])
+        else:
+            d_x = (self.ball_rect.pos[0]+self.ball_rect.size[0]) - (paddle.pos[0])
         iter_num_x = abs(d_x/self.velocity_x)
         iter_num_y = abs(d_y)
-        if iter_num_x < iter_num_y:
+        if iter_num_x < iter_num_y:  # What the fuck does this do
             if d_y < 0:
                 paddle_max = (iter_num_x * self.paddle_velocity * -1) + paddle.pos[1] + (paddle.size[1] / 2)
                 paddle_min = (y_f - paddle.pos[1]) + paddle.pos[1] + (paddle.size[1] / 2)
@@ -215,13 +250,13 @@ class PongAI:
         vx = None
         factor = 1
         if paddle_min > paddle_max:
-            factor = - 1
+            factor = -1
         dy_max = 0
         pos_y = 0
         for pos in range(int(paddle_min), int(paddle_max), 1*factor):
             theta = self.calculate_angle(pos-(paddle.size[1]/2), y_f)
             vx, vy = self.recalculate_ball_speed(theta)
-            if vx > vy:
+            if abs(vx) > abs(vy):
                 yb_f = self.calculate_best_pos(vx, vy, x_f, y_f)
                 d_y = abs(yb_f)-abs(other_paddle.pos[1]+other_paddle.size[1])
                 if dy_max < abs(d_y):
@@ -242,7 +277,8 @@ class PongAI:
             d_wall_y = self.table_size[1] - (self.ball_rect.pos[1]+self.ball_rect.size[1])
         else:
             d_wall_y = -(self.ball_rect.pos[1]+self.ball_rect.size[1])
-        xb_f, yb_f = self.calculate_final_pos(d_wall_x, d_wall_y, x_f, y_f, True)
+        # xb_f, yb_f = self.calculate_final_pos(d_wall_x, d_wall_y, x_f, y_f, True)
+        xb_f, yb_f = self.calculate_final_pos_no_recursion(d_wall_x, d_wall_y, x_f, y_f, True)
         self.velocity_x, self.velocity_y = og_vx, og_vy
 
         return yb_f
