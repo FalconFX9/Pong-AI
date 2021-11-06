@@ -63,6 +63,11 @@ Test results:
             -Avg. comp time of 0.21244ms, no timeout -- R5 4500U
         -1000-341
             -Avg. comp time of 0.214ms, no timeout -- R5 4500U
+        -1000-380
+            -Avg. comp time of 0.509ms, timeout function used -- R5 4500U
+    -Middle return + max DY, min vx > vy offense, non-recursive bounce calculation vs Chaser
+        -1000-57
+            -Threading calculation time ~0.3ms, avg. comp time of 0.49ms with timeout -- R5 4500U
 """
 
 
@@ -231,8 +236,8 @@ class PongAI:
             d_x = (self.ball_rect.pos[0])-(paddle.pos[0] + paddle.size[0])
         else:
             d_x = (self.ball_rect.pos[0]+self.ball_rect.size[0]) - (paddle.pos[0])
-        iter_num_x = abs(d_x/self.velocity_x)
-        iter_num_y = abs(d_y)
+        iter_num_x = abs(d_x/self.velocity_x)  # Number of iterations the ball needs to reach the paddle
+        iter_num_y = abs(d_y)  # Number of iterations the paddle needs to reach the y position of the ball
         if iter_num_x < iter_num_y:  # What the fuck does this do
             if d_y < 0:
                 paddle_max = (iter_num_x * self.paddle_velocity * -1) + paddle.pos[1] + (paddle.size[1] / 2)
@@ -294,7 +299,6 @@ class PongAI:
             sign = 1
         else:
             sign = -1
-        #print(rel_dis)
         return radians(sign*rel_dis*max_angle)
 
     def recalculate_ball_speed(self, angle):

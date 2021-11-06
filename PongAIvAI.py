@@ -79,9 +79,10 @@ class Paddle:
 
     def move(self, enemy_frect, ball_frect, table_size):
         time_init = time.time_ns()
-        direction = self.move_getter(self.frect.copy(), enemy_frect.copy(), ball_frect.copy(), tuple(table_size))
-        self.runtime_avg.append(time.time_ns()-time_init)
-        #direction = timeout(self.move_getter, (self.frect.copy(), enemy_frect.copy(), ball_frect.copy(), tuple(table_size)), {}, self.timeout)
+        #direction = self.move_getter(self.frect.copy(), enemy_frect.copy(), ball_frect.copy(), tuple(table_size))
+
+        direction = timeout(self.move_getter, (self.frect.copy(), enemy_frect.copy(), ball_frect.copy(), tuple(table_size)), {}, self.timeout)
+        self.runtime_avg.append(time.time_ns() - time_init)
         if direction == "up":
             self.frect.move_ip(0, -self.speed)
         elif direction == "down":
@@ -405,7 +406,7 @@ def init_game():
     global pong_ai_obj
     pong_ai_obj = pong_ai.PongAI(True)
     pong_ai_obj_2 = pong_ai.PongAI()
-    paddles[1].move_getter = pong_ai_obj_2.update
+    paddles[1].move_getter = chaser_ai.pong_ai
     paddles[0].move_getter = pong_ai_obj.update #chaser_ai.pong_ai
     
     game_loop(screen, paddles, ball, table_size, clock_rate, turn_wait_rate, score_to_win, 1)
