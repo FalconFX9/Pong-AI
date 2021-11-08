@@ -5,7 +5,7 @@
 # An AI that plays the version of Pong provided by Michael Guerzhoy and Denis Begun
 """
 TODO: Clean up code
-      Optimize code--runtime must be at minimum 5x faster, ideally 10-50x faster.
+      Create correct non-recursive physics simulator (find the math/fix the math)
 
 Runtime issues:
     -offensive tactics result in a 520x slowdown
