@@ -1,3 +1,6 @@
+# Code to plot the computation time of the function
+
+
 import matplotlib.pyplot as plt
 
 file = open("CalculationTime.txt", 'r')

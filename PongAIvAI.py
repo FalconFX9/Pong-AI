@@ -79,9 +79,9 @@ class Paddle:
 
     def move(self, enemy_frect, ball_frect, table_size):
         time_init = time.time_ns()
-        #direction = self.move_getter(self.frect.copy(), enemy_frect.copy(), ball_frect.copy(), tuple(table_size))
+        direction = self.move_getter(self.frect.copy(), enemy_frect.copy(), ball_frect.copy(), tuple(table_size))
 
-        direction = timeout(self.move_getter, (self.frect.copy(), enemy_frect.copy(), ball_frect.copy(), tuple(table_size)), {}, self.timeout)
+        #direction = timeout(self.move_getter, (self.frect.copy(), enemy_frect.copy(), ball_frect.copy(), tuple(table_size)), {}, self.timeout)
         self.runtime_avg.append(time.time_ns() - time_init)
         if direction == "up":
             self.frect.move_ip(0, -self.speed)
@@ -272,7 +272,7 @@ def render(screen, paddles, ball, score, table_size):
     y2, y3, = pong_ai_obj.get_p_minmax()
     pygame.draw.rect(screen, (255, 255, 0), (100, y2, 5, 5))
     pygame.draw.rect(screen, (255, 0, 0), (100, y3, 5, 5))
-    pygame.draw.rect(screen, (255, 0, 255), (40, pong_ai_obj.best_ball_send, 5, 5))
+    pygame.draw.rect(screen, (255, 0, 255), (40, pong_ai_obj.best_ball_send-5, 10, 10))
     pygame.draw.circle(screen, white, (int(ball.get_center()[0]), int(ball.get_center()[1])),  int(ball.frect.size[0]/2), 0)
     vx, vy = pong_ai_obj.get_bounce_velocity()
     angle = math.atan2(vy, vx)
@@ -406,7 +406,7 @@ def init_game():
     global pong_ai_obj
     pong_ai_obj = pong_ai.PongAI(True)
     pong_ai_obj_2 = pong_ai.PongAI()
-    paddles[1].move_getter = chaser_ai.pong_ai
+    paddles[1].move_getter = pong_ai_obj_2.update
     paddles[0].move_getter = pong_ai_obj.update #chaser_ai.pong_ai
     
     game_loop(screen, paddles, ball, table_size, clock_rate, turn_wait_rate, score_to_win, 1)
