@@ -68,6 +68,7 @@ Test results:
     -Middle return + max DY, min vx > vy offense, non-recursive bounce calculation vs Chaser
         -1000-57
             -Threading calculation time ~0.3ms, avg. comp time of 0.49ms with timeout -- R5 4500U
+    -Weirdness
 """
 
 from math import atan2, sin, cos, sqrt, radians
