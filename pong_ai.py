@@ -68,8 +68,6 @@ Test results:
     -Middle return + max DY, min vx > vy offense, non-recursive bounce calculation vs Chaser
         -1000-57
             -Threading calculation time ~0.3ms, avg. comp time of 0.49ms with timeout -- R5 4500U
-    -Middle return + max DY, min vx > vy offense, non-recursive bounce (FIXED????) vs Chaser
-        -1000-353
 """
 
 from math import atan2, sin, cos, sqrt, radians
@@ -155,7 +153,7 @@ class PongAI:
         self.velocity_x = d_x
         self.velocity_y = d_y
 
-    def calculate_final_pos(self, d_wall_x, d_wall_y, x, y, depth=0, offense=False):
+    def calculate_final_pos(self, d_wall_x, d_wall_y, x, y, offense=False):
         """ A recursive function to calculate the final position of the ball
         Args:
             d_wall_x: distance from the ball to the paddle it is heading towards
@@ -163,7 +161,6 @@ class PongAI:
             x, y: position of the ball
             offense: whether the function is being used to compute offense (halts recursion when the enemy paddle is hit)
         """
-        #print(depth)
         if abs(self.velocity_x) < 0.5:
             self.velocity_x = (d_wall_x / abs(d_wall_x)) * 0.5
         iter_num_x = d_wall_x / self.velocity_x
@@ -205,7 +202,7 @@ class PongAI:
             if self.velocity_y < 0:
                 factor = -1
             try:
-                return self.calculate_final_pos(d_wall_x, factor * self.table_size[1]-self.ball_rect.size[1], x_final, y_final, depth+1, offense)
+                return self.calculate_final_pos(d_wall_x, factor * self.table_size[1], x_final, y_final, offense)
             except RecursionError:
                 return x_final, y_final
         elif self.bounced_on_enemy:  # Currently unused, estimates the returning bounce from the enemy
@@ -241,21 +238,16 @@ class PongAI:
         """
         if abs(self.velocity_x) < 0.1:
             self.velocity_x = (dx / abs(dx)) * 0.1
-
         iter_num = dx / self.velocity_x
         distance_y = abs(self.velocity_y) * iter_num
-        if distance_y < abs(dy):
-            y_final = y + self.velocity_y * iter_num
-        else:
-            distance_y -= abs(dy)
-            num_bounces = (abs(distance_y) // (self.table_size[1]-self.ball_rect.size[1])) + 1
-            if num_bounces % 2 != 0:
-                self.velocity_y *= - 1
-            y_final = (distance_y % (self.table_size[1] - self.ball_rect.size[1]))
-            if self.velocity_y < 0:
-                y_final = self.table_size[1] - y_final
-
+        sign_y = self.velocity_y / abs(self.velocity_y)
+        distance_y -= abs(dy)
+        num_bounces = abs(distance_y) % self.table_size[1]
         x_final = self.velocity_x * iter_num
+        if num_bounces % 2 != 0:
+            y_final = (distance_y % (self.table_size[1] - self.ball_rect.size[1])) * sign_y * -1 + y
+            y_final -= self.table_size[1]
+        y_final = (distance_y % (self.table_size[1] - self.ball_rect.size[1])) * sign_y + y
         return x_final, y_final
 
     def offense(self, x_f, y_f, paddle, other_paddle):
@@ -423,16 +415,10 @@ class PongAI:
             else:
                 d_wall_y = -(self.ball_rect.pos[1] + self.ball_rect.size[1])
 
-            if not self.test:
-                self.x_final, self.y_final = self.calculate_final_pos(d_wall_x, d_wall_y, self.ball_rect.pos[0],
+            self.x_final, self.y_final = self.calculate_final_pos(d_wall_x, d_wall_y, self.ball_rect.pos[0],
                                                                   self.ball_rect.pos[1])
             if self.test and self.velocity_x * self.side > 0:
-                self.x_final, self.y_final = self.calculate_final_pos_no_recursion(d_wall_x, d_wall_y,
-                                                                                   self.ball_rect.pos[0],
-                                                                                   self.ball_rect.pos[1])
                 self.y_final = self.offense(self.x_final, self.y_final, paddle_frect, other_paddle_frect)
-            elif self.test and self.velocity_x * self.side <0:
-                self.y_final = self.table_size[1]/2
             if paddle_frect.pos[1] + paddle_frect.size[1] / 2 < self.y_final:
                 self.direction = 'down'
             else:
@@ -455,20 +441,3 @@ class PongAI:
         """ Used to visualize something at some point, currently unused
         """
         return self.p_min, self.p_max
-
-    def test_physics(self):
-        d_wall_x = 300
-        d_wall_y = 100
-        self.velocity_x, self.velocity_y = 2, 1
-        x = 80
-        y = 20
-        self.table_size = (440, 200)
-        import PongAIvAI
-        self.right_paddle = PongAIvAI.fRect((400, 200), (10, 100))
-        self.ball_rect = PongAIvAI.fRect((0, 0), (15, 15))
-        print(self.calculate_final_pos(d_wall_x, d_wall_y, x, y))
-        print(self.calculate_final_pos_no_recursion(d_wall_x, d_wall_y, x, y))
-
-
-test = PongAI()
-test.test_physics()

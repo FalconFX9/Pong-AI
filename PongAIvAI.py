@@ -357,8 +357,8 @@ def game_loop(screen, paddles, ball, table_size, clock_rate, turn_wait_rate, sco
     print("Average calculation time P0:", math.fsum(paddles[0].runtime_avg)/len(paddles[0].runtime_avg))
     print("Average calculation time P1:", math.fsum(paddles[1].runtime_avg) / len(paddles[0].runtime_avg))
     file = open("CalculationTime.txt", 'w')
-    for i in range(len(paddles[0].runtime_avg)):
-        file.write(str(paddles[0].runtime_avg[i])+" "+str(paddles[1].runtime_avg[i])+"\n")
+    for times in paddles[0].runtime_avg:
+        file.write(str(times)+"\n")
     file.close()
     quit()
     font = pygame.font.Font(None, 64)
@@ -391,7 +391,7 @@ def init_game():
     timeout = 0.0001
     clock_rate = 80
     turn_wait_rate = 3
-    score_to_win = 10
+    score_to_win = 1000
 
 
     screen = pygame.display.set_mode(table_size)
